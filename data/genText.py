@@ -7,7 +7,7 @@ path2 = 'D:/FYP/CCNet-main/TongJi/session2/'
 root = './'
 
 
-with open(os.path.join(root, 'train_Tongji.txt'), 'w') as ofs:
+with open(os.path.join(root, 'Tongji_Train.txt'), 'w') as ofs:
     files = os.listdir(path1)
     files.sort()
     for filename in files:

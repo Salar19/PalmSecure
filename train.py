@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
-
+import pickle
 from torch.optim import lr_scheduler
 # import pickle
 import cv2 as cv
@@ -36,7 +36,7 @@ def test(model):
     trainset = MyDataset(txt=train_set_file, transforms=None, train=False)
     testset = MyDataset(txt=test_set_file, transforms=None, train=False)
 
-    batch_size = 1  # 128
+    # batch_size = 128  
 
     data_loader_train = DataLoader(dataset=trainset, batch_size=batch_size, num_workers=2)
     data_loader_test = DataLoader(dataset=testset, batch_size=batch_size, num_workers=2)
@@ -289,7 +289,7 @@ def fit(epoch, model, data_loader, phase='training'):
     loss = running_loss / total
     accuracy = (100.0 * running_correct) / total
 
-    if epoch % 10 == 0:
+    if epoch % 1 == 0:
         print('epoch %d: \t%s loss is \t%7.5f ;\t%s accuracy is \t%d/%d \t%7.3f%%' % (
         epoch, phase, loss, phase, running_correct, total, accuracy))
 
@@ -301,24 +301,25 @@ if __name__== "__main__" :
         description="CO3Net for Palmprint Recfognition"
     )
 
-    parser.add_argument("--batch_size", type=int, default=1024)
-    parser.add_argument("--epoch_num", type=int, default=3000)
+    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--epoch_num", type=int, default=50)
     parser.add_argument("--temp", type=float, default=0.07)
     parser.add_argument("--weight1", type=float, default=0.8)
     parser.add_argument("--weight2", type=float, default=0.2)
     parser.add_argument("--com_weight",type=float,default=0.8)
-    parser.add_argument("--id_num", type=int, default=378,
+    parser.add_argument("--id_num", type=int, default=324,
                         help="IITD: 460 KTU: 145 Tongji: 600 REST: 358 XJTU: 200 POLYU 378 Multi-Spec 500 IITD_Right 230 Tongji_LR 300")
     parser.add_argument("--gpu_id", type=str, default='0')
-    parser.add_argument("--lr", type=float, default=0.001)
-    parser.add_argument("--redstep", type=int, default=500)
-
-    parser.add_argument("--test_interval", type=str, default=1000)
-    parser.add_argument("--save_interval", type=str, default=500)  ## 200 for Multi-spec 500 for RED
+    parser.add_argument("--lr", type=float, default=0.0005)
+    parser.add_argument("--redstep", type=int, default=200)
+    parser.add_argument("--test_interval", type=str, default= 25)
+    parser.add_argument("--save_interval", type=str, default = 10)  ## 200 for Multi-spec 500 for RED
 
     ##Training Path
     parser.add_argument("--train_set_file", type=str, default='./data/train_Tongji.txt')
     parser.add_argument("--test_set_file", type=str, default='./data/test_Tongji.txt')
+
+    parser.add_argument("--pretrained_model", type=str, default='./results/checkpoint/net_params_best.pth', help="Path to the pre-trained .pth file")
 
     ##Store Path
     parser.add_argument("--des_path", type=str, default='./results/checkpoint/')
@@ -352,19 +353,28 @@ if __name__== "__main__" :
     # path
     train_set_file = args.train_set_file
     test_set_file = args.test_set_file
+    batch_size = args.batch_size
 
     # dataset
     trainset = MyDataset(txt=train_set_file, transforms=None, train=True, imside=128, outchannels=1)
     testset = MyDataset(txt=test_set_file, transforms=None, train=False, imside=128, outchannels=1)
 
-    data_loader_train = DataLoader(dataset=trainset, batch_size=batch_size, num_workers=2, shuffle=True)
-    data_loader_test = DataLoader(dataset=testset, batch_size=128, num_workers=2, shuffle=True)
+    data_loader_train = DataLoader(dataset=trainset, batch_size=batch_size, num_workers=12, shuffle=True)
+    data_loader_test = DataLoader(dataset=testset, batch_size=batch_size, num_workers=12, shuffle=True)
 
     print('%s' % (time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())))
 
     print('------Init Model------')
     net = ccnet(num_classes=num_classes,weight=comp_weight)
     best_net = ccnet(num_classes=num_classes,weight=comp_weight)
+
+    if args.pretrained_model and os.path.exists(args.pretrained_model):
+        print(f"Loading pre-trained model from {args.pretrained_model}...")
+        net.load_state_dict(torch.load(args.pretrained_model,weights_only=False))
+        best_net.load_state_dict(torch.load(args.pretrained_model,weights_only=False))
+    else:
+        print("No pre-trained model specified or file not found. Training from scratch.")
+
     net.cuda()
 
     #
