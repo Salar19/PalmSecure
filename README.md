@@ -142,4 +142,4 @@ PalmSecure, powered by CCNet, delivers a **hygienic, scalable, and high-accuracy
 - **Muhammad Hamza Gova**
 - **Muhammad Talha Bilal**
 
-For inquiries or contributions, visit [GitHub Repository](https://github.com/Salar19).
+For inquiries or contributions, visit [GitHub Repository](https://github.com/Salar19/PalmSecure).
